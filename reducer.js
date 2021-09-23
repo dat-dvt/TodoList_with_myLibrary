@@ -1,21 +1,14 @@
-const TODOS_STORAGE_KEY = 'TODOS'
+import storage from './util/storage.js'
 
 const init = {
-    todos: JSON.parse(localStorage.getItem(TODOS_STORAGE_KEY)) || [],
-    currentView: 0,
-    currentTodo: null,
+    todos: storage.get(),
     filter: 'all',
     filters: {
-        all(todo) {
-            return todo
-        },
-        active(todo) {
-            return !todo.completed
-        },
-        completed(todo) {
-            return todo.completed
-        }
+        all: () => true,
+        active: todo => !todo.completed,
+        completed: todo => todo.completed
     }, 
+    editIndex: null,
 }
 
 const actions = {
@@ -26,55 +19,49 @@ const actions = {
                 completed: false
             }
         )
-        console.log(todos)
-        this.set(todos)
+        storage.set(todos)
     },
-
-    toggle( {todos}, status, index ) {
-        todos[index].completed = status
-        this.set(todos)
+    toggle({ todos }, index ) {
+        const todo = todos[index]
+        todo.completed = !todo.completed
+        storage.set(todos)
     },
-
-    toggleAll( {todos}, status ) {
-        console.log(status)
-        for(const todo of todos) {
-            todo.completed = !status
-        }
-        this.set(todos)
+    toggleAll({ todos }, completed ) {
+        todos.forEach(todo => todo.completed = completed)
+        storage.set(todos)
     },
-
-    selectorView( {todos}, index ) {
-        init.currentView = index
-    },
-
-    destroy( {todos}, index ){
+    destroy({ todos }, index ){
         todos.splice(index,1)
-        this.set(todos)
+        storage.set(todos)
     },
-
-    startEdit( {todos}, index ) {
-        init.currentTodo = index
+    switchFilter(state, filter ) {
+        state.filter = filter
+    },    
+    clearCompleted(state) {
+        state.todos = state.todos.filter(state.filters.active)
+        storage.set(state.todos)
     },
-
-    endEdit( {todos}, value ) {
-        todos[init.currentTodo].title = value
-        init.currentTodo = null
-        this.set(todos)
+    startEdit(state, index ) {
+        state.editIndex = index
     },
-
-    clearCompleted( {todos}) {
-        init.todos = todos.filter(init.filters.active)
+    endEdit(state, title ) {
+        if(state.editIndex !== null) {
+            if(title) {
+                state.todos[state.editIndex].title = title
+                storage.set(state.todos)
+            } else {
+                this.destroy(state, state.editIndex)
+            }
+        }
+        state.editIndex = null
     },
-
-    set(info) {
-        localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(info))
-    },
+    cancelEdit(state) {
+        state.editIndex = null
+    }
 }
 
 
 export default function reducer (state = init, action, args) {
-    if(action) {
-        actions[action](state, ...args)
-    }
+    actions[action] && actions[action](state, ...args)
     return state
 }

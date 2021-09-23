@@ -11,7 +11,7 @@ function Header() {
                 onkeyup="event.keyCode === 13 && this.value.trim() && dispatch('add', this.value.trim())"
             >
         </header>
-    `;
+    `
 }
 
 export default Header
