@@ -9,6 +9,7 @@ export default function html([first, ...string], ...values) {
 
 
 export function createStore (reducer) {
+    // State chính là dữ liệu của store được return từ reducer
     let state = reducer();
     const roots = new Map();
 
@@ -28,6 +29,9 @@ export function createStore (reducer) {
             render();
         },
 
+        // có nhiều view và dùng hàm selector để có thể chọn dữ liệu cụ thể trong store tương ứng với view đó,
+        // trong hàm này nhận đối số là state(được trả về từ reducer) và trả về data mà ta muốn. 
+        // Mặc định thì ta return toàn bộ data trong state
         connect (selector = state => state) {
             //props là những công cụ, dữ liệu ta muốn truyền vào sau này
             return component => (props, ...args) => 
